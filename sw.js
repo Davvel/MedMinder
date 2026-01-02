@@ -5,9 +5,6 @@ const ASSETS = [
   './',
   './index.html',
   './main.html',
-  './history.html',
-  './futuremeds.html',
-  './configuremeds.html',
   './manifest.json',
   './meds_icon.png'
 ];
