@@ -17,14 +17,9 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--light); margin: 0; padding: 0; color: var(--dark); }
         
         .top-bar { 
-            background: var(--header-blue); 
-            color: white; 
-            padding: 10px 20px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            position: sticky; top: 0; z-index: 100;
+            background: var(--header-blue); color: white; padding: 10px 20px; 
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100;
         }
         .version-tag { font-size: 0.8em; opacity: 0.9; }
 
@@ -35,24 +30,21 @@
         
         .med-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
         .med-info { flex-grow: 1; }
-        .med-time { font-weight: bold; font-size: 1.1em; color: var(--dark); }
+        .med-time { font-weight: bold; font-size: 1.1em; }
         .stop-tag { font-size: 0.75em; color: var(--danger); display: block; margin-top: 2px; }
 
         .btn { border: none; padding: 12px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 1rem; }
         .btn-green { background: var(--primary); color: white; width: 100px; }
         .btn-gray { background: var(--gray); color: white; width: 100px; cursor: default; }
         .btn-nav { background: var(--secondary); color: white; width: 100%; margin-bottom: 10px; display: block; text-align: center; text-decoration: none; box-sizing: border-box;}
-        .btn-delete { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8em; border-radius: 4px; }
+        .btn-action { padding: 5px 10px; font-size: 0.8em; border-radius: 4px; color: white; margin-left: 5px; }
+        .btn-delete { background: var(--danger); }
+        .btn-edit { background: var(--secondary); }
         .undo-x { color: var(--danger); font-size: 1.5em; margin-left: 10px; cursor: pointer; vertical-align: middle; }
 
         .checkbox-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 10px; 
-            margin: 10px 0;
-            background: #f1f1f1;
-            padding: 12px;
-            border-radius: 8px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; 
+            margin: 10px 0; background: #f1f1f1; padding: 12px; border-radius: 8px;
         }
         .checkbox-item { display: flex; align-items: center; cursor: pointer; font-size: 0.9em; }
         .checkbox-item input { margin-right: 8px; }
@@ -64,8 +56,8 @@
         .view { display: none; }
         .view.active { display: block; }
         
-        .future-day-bucket { border-left: 4px solid var(--secondary); padding-left: 10px; margin-bottom: 15px; }
-        .future-date-label { font-weight: bold; color: var(--header-blue); border-bottom: 1px solid #ddd; display: block; margin-bottom: 5px; }
+        .manager-row { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .manager-actions { display: flex; gap: 5px; margin-top: 5px; justify-content: flex-end; }
     </style>
 </head>
 <body>
@@ -102,8 +94,9 @@
             </div>
         </div>
 
-        <div class="card">
-            <h2>Add New Medication</h2>
+        <div class="card" id="med-form-card">
+            <h2 id="form-title">Add New Medication</h2>
+            <input type="hidden" id="edit-id">
             <div class="form-group">
                 <label>Medication Name:</label>
                 <input type="text" id="med-name" placeholder="e.g. Vitamin C">
@@ -126,7 +119,8 @@
                 <label class="checkbox-item"><input type="checkbox" value="Saturday"> Saturday</label>
                 <label class="checkbox-item"><input type="checkbox" value="Sunday"> Sunday</label>
             </div>
-            <button class="btn btn-nav" style="background: var(--primary); margin-top: 10px;" onclick="addMedication()">Save Medication</button>
+            <button class="btn btn-nav" id="save-btn" style="background: var(--primary); margin-top: 10px;" onclick="saveMedication()">Save Medication</button>
+            <button class="btn btn-nav" id="cancel-edit-btn" style="background: var(--gray); display:none;" onclick="resetForm()">Cancel Edit</button>
         </div>
 
         <div id="weekly-overview"></div>
@@ -151,11 +145,11 @@
 
 <script>
     // --- Version Control ---
-    const APP_VERSION = "1.1.0";
+    const APP_VERSION = "1.2.0";
 
     let data = JSON.parse(localStorage.getItem('medPWA_Data')) || {
         userName: '',
-        meds: [], // {id, name, time, stopDate, days:[]}
+        meds: [],
         history: []
     };
 
@@ -193,7 +187,8 @@
     }
 
     // --- Logic ---
-    function addMedication() {
+    function saveMedication() {
+        const id = document.getElementById('edit-id').value;
         const name = document.getElementById('med-name').value;
         const time = document.getElementById('med-time').value;
         const stopDate = document.getElementById('med-stop-date').value;
@@ -204,18 +199,46 @@
             return;
         }
 
-        data.meds.push({
-            id: Date.now().toString(),
-            name, time, stopDate, days: selectedDays
-        });
+        if (id) {
+            // Update existing
+            const index = data.meds.findIndex(m => m.id === id);
+            data.meds[index] = { id, name, time, stopDate, days: selectedDays };
+        } else {
+            // Add new
+            data.meds.push({ id: Date.now().toString(), name, time, stopDate, days: selectedDays });
+        }
 
         save();
+        resetForm();
+        renderWeeklyCalendar();
+    }
+
+    function editMed(id) {
+        const med = data.meds.find(m => m.id === id);
+        if (!med) return;
+
+        document.getElementById('form-title').innerText = "Edit Medication";
+        document.getElementById('edit-id').value = med.id;
+        document.getElementById('med-name').value = med.name;
+        document.getElementById('med-time').value = med.time;
+        document.getElementById('med-stop-date').value = med.stopDate || '';
+        
+        document.querySelectorAll('#day-selector input').forEach(cb => {
+            cb.checked = med.days.includes(cb.value);
+        });
+
+        document.getElementById('cancel-edit-btn').style.display = 'block';
+        window.scrollTo(0, document.getElementById('med-form-card').offsetTop - 60);
+    }
+
+    function resetForm() {
+        document.getElementById('form-title').innerText = "Add New Medication";
+        document.getElementById('edit-id').value = '';
         document.getElementById('med-name').value = '';
         document.getElementById('med-time').value = '';
         document.getElementById('med-stop-date').value = '';
         document.querySelectorAll('#day-selector input').forEach(cb => cb.checked = false);
-        renderWeeklyCalendar();
-        alert("Medication added!");
+        document.getElementById('cancel-edit-btn').style.display = 'none';
     }
 
     function deleteMed(id) {
@@ -229,7 +252,7 @@
     function isExpired(med, dateObj) {
         if (!med.stopDate) return false;
         const stop = new Date(med.stopDate);
-        stop.setHours(23, 59, 59, 999); // Active through the end of that day
+        stop.setHours(23, 59, 59, 999);
         return dateObj > stop;
     }
 
@@ -244,71 +267,65 @@
             .filter(m => m.days.includes(todayName) && !isExpired(m, now))
             .sort((a, b) => a.time.localeCompare(b.time));
 
-        if (todaysMeds.length === 0) {
-            list.innerHTML = "<p style='text-align:center; color:gray;'>No medications for today.</p>";
-            return;
-        }
-
-        list.innerHTML = todaysMeds.map(med => {
-            const taken = data.history.some(h => h.medId === med.id && h.date === todayStr);
-            return `
-                <div class="med-item">
-                    <div class="med-info">
-                        <div class="med-time">${med.time}</div>
-                        <div class="med-name">${med.name}</div>
-                        ${med.stopDate ? `<span class="stop-tag">Ends: ${med.stopDate}</span>` : ''}
+        list.innerHTML = todaysMeds.length === 0 ? "<p style='text-align:center; color:gray;'>No medications for today.</p>" :
+            todaysMeds.map(med => {
+                const taken = data.history.some(h => h.medId === med.id && h.date === todayStr);
+                return `
+                    <div class="med-item">
+                        <div class="med-info">
+                            <div class="med-time">${med.time}</div>
+                            <div class="med-name">${med.name}</div>
+                            ${med.stopDate ? `<span class="stop-tag">Ends: ${med.stopDate}</span>` : ''}
+                        </div>
+                        <div>
+                            ${taken ? 
+                                `<button class="btn btn-gray">TOOK IT</button><span class="undo-x" onclick="undoTake('${med.id}')">×</span>` : 
+                                `<button class="btn btn-green" onclick="takeMed('${med.id}', '${med.name}')">TAKING IT</button>`
+                            }
+                        </div>
                     </div>
-                    <div>
-                        ${taken ? 
-                            `<button class="btn btn-gray">TOOK IT</button><span class="undo-x" onclick="undoTake('${med.id}')">×</span>` : 
-                            `<button class="btn btn-green" onclick="takeMed('${med.id}', '${med.name}')">TAKING IT</button>`
-                        }
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function renderFuture() {
-        const list = document.getElementById('future-list');
-        list.innerHTML = "";
-        const now = new Date();
-
-        for (let i = 0; i < 28; i++) {
-            let futureDate = new Date();
-            futureDate.setDate(now.getDate() + i);
-            const dayName = daysOfWeek[futureDate.getDay()];
-            
-            const dayMeds = data.meds
-                .filter(m => m.days.includes(dayName) && !isExpired(m, futureDate))
-                .sort((a, b) => a.time.localeCompare(b.time));
-
-            if (dayMeds.length > 0) {
-                let daySection = `<div class="future-day-bucket">
-                    <span class="future-date-label">${futureDate.toDateString()}</span>`;
-                daySection += dayMeds.map(m => `<div style="font-size:0.9em; padding:2px 0;">${m.time} - ${m.name}</div>`).join('');
-                daySection += `</div>`;
-                list.innerHTML += daySection;
-            }
-        }
+                `;
+            }).join('');
     }
 
     function renderWeeklyCalendar() {
         const container = document.getElementById('weekly-overview');
         container.innerHTML = "<h3>Medication Manager</h3>";
         daysOfWeek.forEach(day => {
-            const dayMeds = data.meds.filter(m => m.days.includes(day));
+            const dayMeds = data.meds.filter(m => m.days.includes(day)).sort((a, b) => a.time.localeCompare(b.time));
             let dayHtml = `<div class="card"><h4>${day}</h4>`;
             dayHtml += dayMeds.length === 0 ? `<p style="color:gray; font-size:0.8em;">No meds</p>` : 
                 dayMeds.map(m => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.9em;">
-                        <span><strong>${m.time}</strong> ${m.name}</span>
-                        <button class="btn-delete" onclick="deleteMed('${m.id}')">Delete</button>
+                    <div class="manager-row">
+                        <div style="font-size:0.9em;"><strong>${m.time}</strong> ${m.name}</div>
+                        ${m.stopDate ? `<div class="stop-tag">Stop Date: ${m.stopDate}</div>` : ''}
+                        <div class="manager-actions">
+                            <button class="btn btn-action btn-edit" onclick="editMed('${m.id}')">Edit</button>
+                            <button class="btn btn-action btn-delete" onclick="deleteMed('${m.id}')">Delete</button>
+                        </div>
                     </div>
                 `).join('');
             dayHtml += `</div>`;
             container.innerHTML += dayHtml;
         });
+    }
+
+    function renderFuture() {
+        const list = document.getElementById('future-list');
+        list.innerHTML = "";
+        const now = new Date();
+        for (let i = 0; i < 28; i++) {
+            let futureDate = new Date();
+            futureDate.setDate(now.getDate() + i);
+            const dayName = daysOfWeek[futureDate.getDay()];
+            const dayMeds = data.meds.filter(m => m.days.includes(dayName) && !isExpired(m, futureDate)).sort((a, b) => a.time.localeCompare(b.time));
+            if (dayMeds.length > 0) {
+                let daySection = `<div class="future-day-bucket"><span class="future-date-label">${futureDate.toDateString()}</span>`;
+                daySection += dayMeds.map(m => `<div style="font-size:0.9em; padding:2px 0;">${m.time} - ${m.name}</div>`).join('');
+                daySection += `</div>`;
+                list.innerHTML += daySection;
+            }
+        }
     }
 
     function takeMed(id, name) {
