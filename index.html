@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MedMinder</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="MedMinder">
+    
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-512.png">
+
     <style>
         body, html {
             margin: 0;
@@ -13,20 +22,20 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #ffffff;
+            background-color: #121212; /* Updated to match Dark Theme */
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .splash-container {
             text-align: center;
-            transition: opacity 0.8s ease-out; /* Smooth fade effect */
+            transition: opacity 0.8s ease-out;
         }
 
         .main-title {
             font-size: 3rem;
             font-weight: bold;
-            color: #2ecc71; /* Matches the green in main.html */
+            color: #2ecc71; /* High-contrast green */
             margin: 0;
             letter-spacing: 2px;
         }
@@ -38,7 +47,6 @@
             font-weight: 300;
         }
 
-        /* Simple animation for the text entry */
         .fade-in {
             animation: fadeInScale 1s forwards;
         }
@@ -61,20 +69,24 @@
     </div>
 
     <script>
-        // Wait for the window to load
+        // 1. Service Worker Registration for PWA Installation
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered'))
+                    .catch(err => console.log('SW Failed', err));
+            });
+        }
+
+        // 2. Splash Screen Logic
         window.onload = () => {
             const splash = document.getElementById('splash');
 
-            // 1. Wait 2 seconds (the display time)
             setTimeout(() => {
-                // 2. Trigger the CSS fade out
                 splash.classList.add('fade-out');
-
-                // 3. After the fade animation finishes (0.8s), redirect..
                 setTimeout(() => {
                     window.location.href = 'main.html';
                 }, 800); 
-
             }, 2000); 
         };
     </script>
