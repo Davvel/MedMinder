@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedMinder</title>
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --secondary: #3498db;
+            --header-blue: #2980b9;
+            --danger: #e74c3c;
+            --gray: #95a5a6;
+            --dark: #2c3e50;
+            --light: #f8f9fa;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--light); margin: 0; padding: 0; color: var(--dark); }
+        
+        /* New Header Bar */
+        .top-bar { 
+            background: var(--header-blue); 
+            color: white; 
+            padding: 10px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .version-tag { font-size: 0.8em; opacity: 0.9; }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        header { background: white; padding: 20px; text-align: center; border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: var(--header-blue); }
+        
+        /* List Styles */
+        .scroll-list { max-height: 450px; overflow-y: auto; }
+        .med-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .med-info { flex-grow: 1; }
+        .med-time { font-weight: bold; font-size: 1.1em; }
+
+        /* Buttons */
+        .btn { border: none; padding: 12px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-green { background: var(--primary); color: white; width: 100px; }
+        .btn-gray { background: var(--gray); color: white; width: 100px; cursor: default; }
+        .btn-nav { background: var(--secondary); color: white; width: 100%; margin-bottom: 10px; }
+        .btn-delete { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8em; }
+        .undo-x { color: var(--danger); font-size: 1.5em; margin-left: 10px; cursor: pointer; vertical-align: middle; }
+
+        /* Fixed Checkbox Grid */
+        .checkbox-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
+            gap: 10px; 
+            margin: 15px 0;
+            background: #f1f1f1;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .checkbox-item input { width: auto; margin-right: 10px; }
+
+        /* Form */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+        input[type="text"], input[type="time"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+
+        .view { display: none; }
+        .view.active { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <strong id="app-title">MedMinder</strong>
+    <span class="version-tag" id="version-display"></span>
+</div>
+
+<header>
+    <h1 id="greeting">Hello!</h1>
+    <p id="today-display"></p>
+</header>
+
+<div class="container">
+    <div id="home-view" class="view active">
+        <div class="card">
+            <h2>Today's Schedule</h2>
+            <div id="daily-list" class="scroll-list"></div>
+        </div>
+        <button class="btn btn-nav" onclick="showView('configure-view')">⚙️ Configure</button>
+        <button class="btn btn-nav" onclick="showView('history-view')">🕒 15-Day History</button>
+    </div>
+
+    <div id="configure-view" class="view">
+        <button class="btn btn-nav" onclick="showView('home-view')">← Back to Today</button>
+        
+        <div class="card">
+            <h2>User Profile</h2>
+            <div class="form-group">
+                <label>Your Name:</label>
+                <input type="text" id="user-name-input" onchange="updateName(this.value)">
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Add New Medication</h2>
+            <div class="form-group">
+                <label>Medication Name:</label>
+                <input type="text" id="med-name" placeholder="e.g. Vitamin C">
+            </div>
+            <div class="form-group">
+                <label>Time to Take:</label>
+                <input type="time" id="med-time">
+            </div>
+            <label style="font-weight: bold; font-size: 0.9em;">Select Days:</label>
+            <div class="checkbox-grid" id="day-selector">
+                <label class="checkbox-item"><input type="checkbox" value="Monday"> Monday</label>
+                <label class="checkbox-item"><input type="checkbox" value="Tuesday"> Tuesday</label>
+                <label class="checkbox-item"><input type="checkbox" value="Wednesday"> Wednesday</label>
+                <label class="checkbox-item"><input type="checkbox" value="Thursday"> Thursday</label>
+                <label class="checkbox-item"><input type="checkbox" value="Friday"> Friday</label>
+                <label class="checkbox-item"><input type="checkbox" value="Saturday"> Saturday</label>
+                <label class="checkbox-item"><input type="checkbox" value="Sunday"> Sunday</label>
+            </div>
+            <button class="btn btn-nav" style="background: var(--primary);" onclick="addMedication()">Save Medication</button>
+        </div>
+
+        <div id="weekly-overview"></div>
+    </div>
+
+    <div id="history-view" class="view">
+        <button class="btn btn-nav" onclick="showView('home-view')">← Back to Today</button>
+        <div class="card">
+            <h2>Recent History</h2>
+            <div id="history-list" class="scroll-list"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Version Control ---
+    const APP_VERSION = "1.0.1";
+
+    // --- State Management ---
+    let data = JSON.parse(localStorage.getItem('medPWA_Data')) || {
+        userName: '',
+        meds: [],
+        history: []
+    };
+
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    function init() {
+        document.getElementById('version-display').innerText = "V " + APP_VERSION;
+        
+        if (!data.userName) {
+            data.userName = prompt("Welcome! Please enter your name:") || "User";
+            save();
+        }
+        
+        document.getElementById('user-name-input').value = data.userName;
+        updateGreeting();
+        
+        const now = new Date();
+        document.getElementById('today-display').innerText = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+        
+        renderToday();
+    }
+
+    function save() {
+        localStorage.setItem('medPWA_Data', JSON.stringify(data));
+    }
+
+    function updateGreeting() {
+        document.getElementById('greeting').innerText = `Hello, ${data.userName}!`;
+    }
+
+    function updateName(newName) {
+        if (newName.trim()) {
+            data.userName = newName;
+            save();
+            updateGreeting();
+        }
+    }
+
+    // --- Navigation ---
+    function showView(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        if(viewId === 'home-view') renderToday();
+        if(viewId === 'configure-view') renderWeeklyCalendar();
+        if(viewId === 'history-view') renderHistory();
+        window.scrollTo(0,0);
+    }
+
+    // --- Logic ---
+    function addMedication() {
+        const name = document.getElementById('med-name').value;
+        const time = document.getElementById('med-time').value;
+        const selectedDays = Array.from(document.querySelectorAll('#day-selector input:checked')).map(cb => cb.value);
+
+        if (!name || !time || selectedDays.length === 0) {
+            alert("Please fill in name, time, and at least one day.");
+            return;
+        }
+
+        const newMed = {
+            id: Date.now().toString(),
+            name,
+            time,
+            days: selectedDays
+        };
+
+        data.meds.push(newMed);
+        save();
+        
+        // Reset form
+        document.getElementById('med-name').value = '';
+        document.getElementById('med-time').value = '';
+        document.querySelectorAll('#day-selector input').forEach(cb => cb.checked = false);
+        
+        renderWeeklyCalendar();
+        alert("Medication added!");
+    }
+
+    function deleteMed(id) {
+        if(confirm("Remove this medication entirely?")) {
+            data.meds = data.meds.filter(m => m.id !== id);
+            save();
+            renderWeeklyCalendar();
+        }
+    }
+
+    function takeMed(id, name) {
+        const entry = {
+            medId: id,
+            medName: name,
+            date: new Date().toDateString(),
+            timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        };
+        data.history.push(entry);
+        save();
+        renderToday();
+    }
+
+    function undoTake(id) {
+        if (confirm("Are you sure you did NOT take this medicine?")) {
+            const today = new Date().toDateString();
+            const index = data.history.findLastIndex(h => h.medId === id && h.date === today);
+            if (index > -1) {
+                data.history.splice(index, 1);
+                save();
+                renderToday();
+            }
+        }
+    }
+
+    // --- Rendering ---
+    function renderToday() {
+        const list = document.getElementById('daily-list');
+        const todayName = daysOfWeek[new Date().getDay()];
+        const todayStr = new Date().toDateString();
+        
+        const todaysMeds = data.meds
+            .filter(m => m.days.includes(todayName))
+            .sort((a, b) => a.time.localeCompare(b.time));
+
+        if (todaysMeds.length === 0) {
+            list.innerHTML = "<p style='text-align:center; color:gray;'>No medications scheduled for today.</p>";
+            return;
+        }
+
+        list.innerHTML = todaysMeds.map(med => {
+            const taken = data.history.some(h => h.medId === med.id && h.date === todayStr);
+            return `
+                <div class="med-item">
+                    <div class="med-info">
+                        <div class="med-time">${med.time}</div>
+                        <div class="med-name">${med.name}</div>
+                    </div>
+                    <div>
+                        ${taken ? 
+                            `<button class="btn btn-gray">TOOK IT</button><span class="undo-x" onclick="undoTake('${med.id}')">×</span>` : 
+                            `<button class="btn btn-green" onclick="takeMed('${med.id}', '${med.name}')">TAKING IT</button>`
+                        }
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderWeeklyCalendar() {
+        const container = document.getElementById('weekly-overview');
+        container.innerHTML = "<h3>Weekly Medication List</h3>";
+
+        daysOfWeek.forEach(day => {
+            const dayMeds = data.meds.filter(m => m.days.includes(day))
+                                    .sort((a, b) => a.time.localeCompare(b.time));
+            let dayHtml = `<div class="card"><h4>${day}</h4>`;
+            
+            if(dayMeds.length === 0) {
+                dayHtml += `<p style="font-size:0.8em; color:gray;">Empty</p>`;
+            } else {
+                dayHtml += dayMeds.map(m => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.9em; border-bottom:1px solid #f9f9f9; padding-bottom:5px;">
+                        <span><strong>${m.time}</strong> - ${m.name}</span>
+                        <button class="btn-delete" onclick="deleteMed('${m.id}')">Delete</button>
+                    </div>
+                `).join('');
+            }
+            dayHtml += `</div>`;
+            container.innerHTML += dayHtml;
+        });
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        const fifteenDaysAgo = new Date();
+        fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+
+        const filteredHistory = data.history
+            .filter(h => new Date(h.date) >= fifteenDaysAgo)
+            .reverse();
+
+        if(filteredHistory.length === 0) {
+            list.innerHTML = "<p style='text-align:center; color:gray;'>No history found for the last 15 days.</p>";
+            return;
+        }
+
+        list.innerHTML = filteredHistory.map(h => `
+            <div class="med-item">
+                <div class="med-info">
+                    <small>${h.date}</small>
+                    <div><strong>${h.medName}</strong></div>
+                </div>
+                <div style="color:var(--secondary); font-weight:bold;">${h.timestamp}</div>
+            </div>
+        `).join('');
+    }
+
+    init();
+</script>
+
+</body>
+</html>
