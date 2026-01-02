@@ -30,6 +30,8 @@
         .med-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .med-info { display: flex; flex-direction: column; gap: 2px; }
         .med-days-list { margin: 5px 0 0 0; padding-left: 20px; font-size: 0.75rem; color: var(--text-dim); }
+        
+        .settings-row { display: flex; gap: 10px; align-items: center; }
     </style>
 </head>
 <body>
@@ -41,25 +43,32 @@
 <div class="container">
     <button class="btn btn-nav" onclick="window.history.back()">← Back</button>
 
+    <div class="card">
+        <h2>User Settings</h2>
+        <div class="settings-row">
+            <div style="flex: 1;">
+                <label>User Name:</label>
+                <input type="text" id="user-name-input" placeholder="Your Name">
+            </div>
+            <button class="btn-action" style="background: var(--primary); height: 40px; margin-top: 20px;" onclick="updateUserName()">Update Name</button>
+        </div>
+    </div>
+
     <button id="add-med-btn" class="btn" style="background: var(--primary); color: white;" onclick="showAddForm()">+ Add New Medication</button>
 
     <div id="med-form-container" class="card" style="display:none;">
         <h2 id="form-title">Medication Setup</h2>
         <input type="hidden" id="edit-id">
-        
         <div style="margin-bottom:12px;">
             <label>Medication Name:</label>
             <input type="text" id="med-name" placeholder="example Vitamin C">
         </div>
-
         <div style="margin-bottom:12px;">
             <label>Time:</label>
             <input type="time" id="med-time">
         </div>
-
-        <label>Days & Optional Stop Dates <span style="font-weight:normal; font-size: 0.75rem; color:var(--text-dim);">(leave blank to never stop)</span>:</label>
+        <label>Days & Optional Stop Dates:</label>
         <div class="taper-grid" id="taper-selector"></div>
-
         <button class="btn" style="background: var(--primary); color: white; margin-top:10px;" onclick="saveMedication()">SAVE</button>
         <button class="btn" style="background: var(--gray); color: white;" onclick="hideForm()">Cancel</button>
     </div>
@@ -70,30 +79,32 @@
     </div>
 
     <div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 20px;">
-        <button class="btn" style="background: var(--danger); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem;" onclick="masterReset()">
-            <span>⚠</span> Clear All Medications
-        </button>
+        <button class="btn" style="background: var(--danger); color: white;" onclick="masterReset()">⚠ Clear All Data</button>
     </div>
 </div>
 
 <script>
     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    let data = JSON.parse(localStorage.getItem('medPWA_Data')) || { meds: [], history: [] };
-
-    function formatDate(dateObj) {
-        const d = new Date(dateObj);
-        return `${daysOfWeek[d.getDay()].substring(0,3)} ${String(d.getDate()).padStart(2, '0')}-${months[d.getMonth()]}`;
-    }
+    let data = JSON.parse(localStorage.getItem('medPWA_Data')) || { userName: 'User', meds: [], history: [] };
 
     function saveToDisk() { localStorage.setItem('medPWA_Data', JSON.stringify(data)); }
 
+    // --- User Name Logic ---
+    function updateUserName() {
+        const newName = document.getElementById('user-name-input').value;
+        if (newName.trim()) {
+            data.userName = newName.trim();
+            saveToDisk();
+            alert("Name updated to: " + data.userName);
+        }
+    }
+
+    // --- Medication UI Logic ---
     function showAddForm() {
         resetFormFields();
         document.getElementById('med-form-container').style.display = "block";
         document.getElementById('add-med-btn').style.display = "none";
         document.getElementById('stored-list-card').style.display = "none";
-        document.getElementById('form-title').innerText = "Add New Medication";
     }
 
     function hideForm() {
@@ -123,7 +134,7 @@
             }
         });
 
-        if (!name || !time || schedules.length === 0) return alert("Required info missing.");
+        if (!name || !time || schedules.length === 0) return alert("Missing info.");
 
         const entry = { id: idInput || Date.now().toString(), name, time, schedules };
         if (idInput) {
@@ -141,41 +152,33 @@
     function renderStoredMeds() {
         const list = document.getElementById('stored-list-content');
         if (data.meds.length === 0) {
-            list.innerHTML = "<p style='text-align:center; color:var(--text-dim);'>No medications stored.</p>";
+            list.innerHTML = "<p style='text-align:center;'>No medications stored.</p>";
             return;
         }
-
-        list.innerHTML = data.meds.map(m => {
-            const scheds = (m.schedules || []).map(s => {
-                const stopPart = s.stopDate ? ` (Till ${formatDate(new Date(s.stopDate))})` : '';
-                return `<li>${s.day}${stopPart}</li>`;
-            }).join('');
-
-            return `<div class="med-item">
+        list.innerHTML = data.meds.map(m => `
+            <div class="med-item">
                 <div class="med-header">
                     <div class="med-info">
                         <span style="color:var(--secondary); font-weight:bold;">${m.time}</span>
-                        <span style="color:#fff; font-weight:700;">${m.name}</span>
+                        <span style="color:#fff;">${m.name}</span>
                     </div>
                     <div>
                         <button class="btn-action" style="background:var(--secondary)" onclick="editMed('${m.id}')">Edit</button>
                         <button class="btn-action" style="background:var(--danger)" onclick="deleteMed('${m.id}')">Del</button>
                     </div>
                 </div>
-                <ul class="med-days-list">${scheds}</ul>
-            </div>`;
-        }).join('');
+            </div>
+        `).join('');
     }
 
     function editMed(id) {
         const med = data.meds.find(m => m.id === id);
         if (!med) return;
         showAddForm();
-        document.getElementById('form-title').innerText = "Edit Medication";
         document.getElementById('edit-id').value = med.id;
         document.getElementById('med-name').value = med.name;
         document.getElementById('med-time').value = med.time;
-        (med.schedules || []).forEach(s => {
+        med.schedules.forEach(s => {
             const cb = document.querySelector(`.day-check[value="${s.day}"]`);
             if(cb) cb.checked = true;
             const dt = document.getElementById(`stop-${s.day}`);
@@ -184,7 +187,7 @@
     }
 
     function deleteMed(id) {
-        if(confirm("Delete this medication?")) {
+        if(confirm("Delete?")) {
             data.meds = data.meds.filter(m => m.id !== id);
             saveToDisk();
             renderStoredMeds();
@@ -192,13 +195,16 @@
     }
 
     function masterReset() {
-        if (prompt("⚠️ This wipes ALL data. Type SURE to confirm:") === "SURE") {
+        if (prompt("Type SURE to wipe ALL data:") === "SURE") {
             localStorage.clear();
-            window.history.back(); // Corrected to use history instead of a hard link
+            window.history.back();
         }
     }
 
     window.onload = function() {
+        // Load existing name into input
+        document.getElementById('user-name-input').value = data.userName || '';
+        
         const container = document.getElementById('taper-selector');
         container.innerHTML = daysOfWeek.map(day => `
             <div class="taper-row">
