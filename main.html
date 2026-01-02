@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedMinder</title>
+    <title>MedMinder - Dashboard</title>
     <style>
         :root {
             --primary: #2ecc71; --secondary: #3498db; --header-blue: #1a252f; 
@@ -24,28 +24,16 @@
         .med-time-label { font-size: 1.1rem; font-weight: 800; color: #fff; }
         .med-name-label { font-size: 0.95rem; color: var(--text-dim); }
 
-        .btn { border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 700; width: 100%; margin-bottom: 10px; font-size: 0.95rem; transition: all 0.2s ease; display: block; text-align: center; }
+        .btn { border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 700; width: 100%; margin-bottom: 12px; font-size: 0.95rem; transition: all 0.2s ease; display: block; text-align: center; text-decoration: none; }
         .btn-take { background: linear-gradient(135deg, #28a745, #218838); color: white; width: 120px; height: 50px; border-radius: 25px; }
+        .btn-nav { background: var(--secondary); color: white; }
         
         .took-container { position: relative; width: 120px; height: 50px; }
         .btn-took { background: #2a2a2a; color: var(--text-dim); width: 100%; height: 100%; border-radius: 25px; border: 1px solid #444; cursor: default; display: flex; align-items: center; justify-content: center; margin:0; }
         .undo-badge { position: absolute; top: -6px; right: -6px; background: var(--danger); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; border: 2px solid var(--card-bg); }
 
-        .btn-nav { background: var(--secondary); color: white; }
-        .btn-action { width: auto; padding: 6px 12px; font-size: 0.8rem; color: white; margin-left: 5px; border-radius: 6px; border:none; cursor:pointer; }
-        
-        .preview-section { margin-top: 5px; opacity: 0.6; }
+        .preview-section { margin-top: 5px; opacity: 0.7; }
         .preview-item { font-size: 0.85rem; padding: 4px 0; border-bottom: 1px dashed #444; display: flex; justify-content: space-between; color: var(--text-dim); }
-        
-        .month-header { background: #333; color: white; padding: 8px; border-radius: 8px; margin: 15px 0 10px 0; text-align: center; font-weight: bold; font-size: 0.9rem;}
-        .week-chunk { border-left: 4px solid var(--secondary); background: #252525; padding: 10px; border-radius: 0 10px 10px 0; margin-bottom: 15px; }
-        .week-title { font-size: 0.75rem; color: var(--secondary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #333; }
-
-        .view { display: none; }
-        .view.active { display: block; }
-        .taper-grid { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
-        .taper-row { display: grid; grid-template-columns: 100px 1fr; align-items: center; background: #2a2a2a; padding: 6px; border-radius: 8px; }
-        input[type="text"], input[type="time"], input[type="date"] { width: 100%; padding: 8px; border: 1px solid #444; background: #121212; color: white; border-radius: 6px; font-size: 0.95rem; }
     </style>
 </head>
 <body>
@@ -56,62 +44,30 @@
 </div>
 
 <header>
-    <h1 id="greeting" style="margin: 0;">Hello!</h1>
+    <h1 id="greeting" style="margin: 0; font-size: 1.3rem;">Hello!</h1>
     <p id="today-display" style="margin: 0; color: var(--text-dim); font-size: 0.85rem;"></p>
 </header>
 
 <div class="container">
-    <div id="home-view" class="view active">
-        <div class="card">
-            <h2>Today's Schedule</h2>
-            <div id="daily-list"></div>
-        </div>
-        <div id="tomorrow-preview-card" class="card preview-section">
-            <h2 id="tomorrow-header-label" style="font-size: 0.9rem; color: var(--text-dim);">Tomorrow's Preview</h2>
-            <div id="tomorrow-list"></div>
-        </div>
-        <button class="btn btn-nav" onclick="showView('configure-view')">⚙️ Configure Medications</button>
-        <button class="btn btn-nav" onclick="showView('future-view')">📅 Future Meds (4 Weeks)</button>
-        <button class="btn btn-nav" onclick="showView('history-view')">🕒 Adherence History</button>
+    <div class="card">
+        <h2>Today's Schedule</h2>
+        <div id="daily-list"></div>
     </div>
 
-    <div id="configure-view" class="view">
-        <button class="btn btn-nav" onclick="showView('home-view')">← Back to Today</button>
-        <button id="add-med-btn" class="btn" style="background: var(--primary); color: white;" onclick="showAddForm()">+ Add New Medication</button>
-        
-        <div id="med-form-container" class="card" style="display:none;">
-            <h2 id="form-title">Medication Setup</h2>
-            <input type="hidden" id="edit-id">
-            <div style="margin-bottom:10px;">
-                <label style="font-weight: bold; font-size: 0.85rem;">Medication Name:</label>
-                <input type="text" id="med-name" placeholder="example Vitamin C">
-            </div>
-            <div style="margin-bottom:10px;">
-                <label style="font-weight: bold; font-size: 0.85rem;">Time:</label>
-                <input type="time" id="med-time">
-            </div>
-            <label style="font-weight: bold; font-size: 0.85rem;">Days & Optional Stop Dates:</label>
-            <div class="taper-grid" id="taper-selector"></div>
-            <button class="btn" style="background: var(--primary); color:white;" onclick="saveMedication()">SAVE</button>
-            <button class="btn" style="background: var(--gray); color:white;" onclick="hideForm()">Cancel</button>
-        </div>
-
-        <div class="card" id="stored-list-card">
-            <h2>Stored Medication List</h2>
-            <div id="stored-list-content"></div>
-        </div>
-        <button class="btn" style="background: var(--danger); color: white; margin-top: 20px;" onclick="masterReset()">⚠ Clear All Medications</button>
+    <div id="tomorrow-preview-card" class="card preview-section">
+        <h2 id="tomorrow-header-label" style="font-size: 0.9rem; color: var(--text-dim);">Tomorrow's Preview</h2>
+        <div id="tomorrow-list"></div>
     </div>
 
-    <div id="future-view" class="view"><button class="btn btn-nav" onclick="showView('home-view')">← Back</button><div id="future-list-content"></div></div>
-    <div id="history-view" class="view"><button class="btn btn-nav" onclick="showView('home-view')">← Back</button><div class="card"><h2>Recent Adherence Log</h2><div id="history-list-content"></div></div></div>
+    <button class="btn btn-nav" onclick="window.location.href='configuremeds.html'">⚙️ Configure Medications</button>
+    <button class="btn btn-nav" onclick="window.location.href='futuremeds.html'">📅 Future Meds (4 Weeks)</button>
+    <button class="btn btn-nav" onclick="window.location.href='history.html'">🕒 Adherence History</button>
 </div>
 
 <script>
-    const APP_VERSION = "1.7.7";
+    const APP_VERSION = "1.8.0";
     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const fullMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     let data = { userName: '', meds: [], history: [], installDate: '' };
 
     function formatDate(dateObj) {
@@ -129,7 +85,14 @@
 
     function loadData() {
         const saved = localStorage.getItem('medPWA_Data');
-        if (saved) { try { data = JSON.parse(saved); if (!Array.isArray(data.meds)) data.meds = []; if (!Array.isArray(data.history)) data.history = []; } catch(e) {} }
+        if (saved) { 
+            try { 
+                data = JSON.parse(saved); 
+                if (!Array.isArray(data.meds)) data.meds = [];
+                if (!Array.isArray(data.history)) data.history = [];
+            } catch(e) {} 
+        }
+        // Save first initialization date if not present
         if (!data.installDate) { 
             const today = new Date(); today.setHours(0,0,0,0);
             data.installDate = today.toDateString();
@@ -138,52 +101,6 @@
     }
 
     function saveToDisk() { localStorage.setItem('medPWA_Data', JSON.stringify(data)); }
-
-    function showView(id) {
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        if (id === 'home-view') renderToday();
-        if (id === 'configure-view') { hideForm(); renderStoredMeds(); }
-        if (id === 'future-view') renderFuture();
-        if (id === 'history-view') renderHistory();
-    }
-
-    function showAddForm() { 
-        resetFormFields(); 
-        document.getElementById('med-form-container').style.display = "block"; 
-        document.getElementById('add-med-btn').style.display = "none";
-        document.getElementById('stored-list-card').style.display = "none";
-    }
-
-    function hideForm() { 
-        document.getElementById('med-form-container').style.display = "none"; 
-        document.getElementById('add-med-btn').style.display = "block";
-        document.getElementById('stored-list-card').style.display = "block";
-    }
-
-    function resetFormFields() {
-        document.getElementById('edit-id').value = '';
-        document.getElementById('med-name').value = '';
-        document.getElementById('med-time').value = '';
-        document.querySelectorAll('.day-check').forEach(c => c.checked = false);
-        document.querySelectorAll('input[type="date"]').forEach(d => d.value = '');
-    }
-
-    function saveMedication() {
-        const idInput = document.getElementById('edit-id').value;
-        const name = document.getElementById('med-name').value;
-        const time = document.getElementById('med-time').value;
-        const schedules = [];
-        daysOfWeek.forEach(day => {
-            const cb = document.querySelector(`.day-check[value="${day}"]`);
-            if (cb && cb.checked) { schedules.push({ day, stopDate: document.getElementById(`stop-${day}`).value }); }
-        });
-        if (!name || !time || schedules.length === 0) return alert("Required info missing.");
-        const entry = { id: idInput || Date.now().toString(), name, time, schedules };
-        if (idInput) { const idx = data.meds.findIndex(m => m.id === idInput); if (idx !== -1) data.meds[idx] = entry; }
-        else { data.meds.push(entry); }
-        saveToDisk(); hideForm(); renderStoredMeds();
-    }
 
     function isExpired(med, checkDate) {
         const dayName = daysOfWeek[checkDate.getDay()];
@@ -198,6 +115,7 @@
         const list = document.getElementById('daily-list');
         const tomorrowList = document.getElementById('tomorrow-list');
         const now = new Date(); const tomorrow = new Date(); tomorrow.setDate(now.getDate() + 1);
+        
         document.getElementById('today-display').innerText = formatDate(now);
         document.getElementById('tomorrow-header-label').innerText = `Tomorrow's Preview (${formatDate(tomorrow).split('-20')[0]})`;
 
@@ -216,108 +134,34 @@
                         `<button class="btn btn-take" onclick="takeMed('${m.id}','${m.name}')">TAKING IT</button>`}
                     </div></div>`;
             }).join('');
+
         tomorrowList.innerHTML = nextDay.length === 0 ? "<p style='font-size:0.8rem;'>None scheduled.</p>" : 
             nextDay.map(m => `<div class="preview-item"><span>${m.name}</span> <span>${m.time}</span></div>`).join('');
     }
 
-    function renderHistory() {
-        const list = document.getElementById('history-list-content');
-        list.innerHTML = "";
-        const now = new Date(); const install = new Date(data.installDate); install.setHours(0,0,0,0);
-        for (let i = 0; i < 15; i++) {
-            let dayToProcess = new Date(); dayToProcess.setDate(now.getDate() - i); dayToProcess.setHours(0,0,0,0);
-            if (dayToProcess < install) break;
-            const dayMeds = data.meds.filter(m => !isExpired(m, dayToProcess));
-            if (dayMeds.length > 0) {
-                const dateHeader = document.createElement('div');
-                dateHeader.style.padding = "5px 0"; dateHeader.style.borderBottom = "1px solid #333";
-                dateHeader.style.color = "var(--secondary)"; dateHeader.style.fontSize = "0.8rem";
-                dateHeader.style.fontWeight = "bold"; dateHeader.innerText = formatDate(dayToProcess);
-                list.appendChild(dateHeader);
-                dayMeds.sort((a,b) => a.time.localeCompare(b.time)).forEach(m => {
-                    const record = data.history.find(h => h.medId === m.id && h.date === dayToProcess.toDateString());
-                    const item = document.createElement('div'); item.className = "med-item";
-                    item.innerHTML = `
-                        <div class="med-label-group"><span class="med-time-label" style="font-size:0.9rem;">${m.time}</span><span class="med-name-label">${m.name}</span></div>
-                        <div style="text-align:right;">${record ? `<div style="color:var(--primary); font-weight:bold;">TAKEN</div><small>at ${record.timestamp}</small>` : `<div style="color:var(--danger); font-weight:bold;">NOT TAKEN</div>`}</div>
-                    `;
-                    list.appendChild(item);
-                });
-            }
-        }
-    }
-
-    function renderFuture() {
-        const list = document.getElementById('future-list-content'); list.innerHTML = "";
-        const now = new Date(); let currentMonth = -1; let weekContainer = null;
-        for (let i = 1; i <= 28; i++) {
-            let d = new Date(); d.setDate(now.getDate() + i);
-            const medsForDay = data.meds.filter(m => !isExpired(m, d)).sort((a,b) => a.time.localeCompare(b.time));
-            if (d.getMonth() !== currentMonth) {
-                currentMonth = d.getMonth();
-                const mHead = document.createElement('div'); mHead.className = "month-header";
-                mHead.innerText = `${fullMonths[currentMonth]} ${d.getFullYear()}`;
-                list.appendChild(mHead);
-            }
-            if (d.getDay() === 1 || !weekContainer) {
-                weekContainer = document.createElement('div'); weekContainer.className = "week-chunk";
-                const wTitle = document.createElement('div'); wTitle.className = "week-title";
-                wTitle.innerText = `Week starting ${formatDate(d)}`;
-                weekContainer.appendChild(wTitle);
-                list.appendChild(weekContainer);
-            }
-            if (medsForDay.length > 0) {
-                const dayDiv = document.createElement('div');
-                let dayHtml = `<div style="font-weight:bold; font-size:0.85rem; margin-bottom:2px;">${formatDate(d)}</div>`;
-                medsForDay.forEach(m => {
-                    const sched = m.schedules.find(s => s.day === daysOfWeek[d.getDay()]);
-                    const stopLabel = (sched && sched.stopDate) ? `<span style="color:var(--danger); font-size:0.75rem; font-weight:bold;"> ${formatTillLabel(sched.stopDate, d)}</span>` : "";
-                    dayHtml += `<div style="font-size:0.8rem; color:var(--text-dim);"><strong>${m.time}</strong> - ${m.name}${stopLabel}</div>`;
-                });
-                dayDiv.innerHTML = dayHtml; weekContainer.appendChild(dayDiv);
-            }
-        }
-    }
-
-    function renderStoredMeds() {
-        const list = document.getElementById('stored-list-content');
-        if (data.meds.length === 0) { list.innerHTML = "<p style='text-align:center;'>None.</p>"; return; }
-        list.innerHTML = data.meds.map(m => {
-            const scheds = m.schedules.map(s => `<li>${s.day} ${s.stopDate ? `(Till ${formatDate(new Date(s.stopDate)).split('-20')[0]})` : ''}</li>`).join('');
-            return `<div style="border-bottom: 1px solid #333; padding:10px 0;">
-                <div style="display:flex; justify-content:space-between; align-items:start;">
-                    <div class="med-label-group"><span class="med-time-label" style="color:var(--secondary);">${m.time}</span><span class="med-name-label" style="color:#fff;">${m.name}</span></div>
-                    <div><button class="btn-action" style="background:var(--secondary)" onclick="editMed('${m.id}')">Edit</button><button class="btn-action" style="background:var(--danger)" onclick="deleteMed('${m.id}')">Del</button></div>
-                </div><ul style="margin:5px 0 0 0; padding-left:20px; font-size:0.75rem; color:var(--text-dim);">${scheds}</ul></div>`;
-        }).join('');
-    }
-
-    function editMed(id) {
-        const med = data.meds.find(m => m.id === id); if (!med) return;
-        showAddForm(); document.getElementById('edit-id').value = med.id;
-        document.getElementById('med-name').value = med.name;
-        document.getElementById('med-time').value = med.time;
-        med.schedules.forEach(s => {
-            const cb = document.querySelector(`.day-check[value="${s.day}"]`); if(cb) cb.checked = true;
-            const dt = document.getElementById(`stop-${s.day}`); if(dt) dt.value = s.stopDate || '';
-        });
-    }
-
     function takeMed(id, name) { 
-        data.history.push({medId:id, medName:name, date:new Date().toDateString(), timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}); 
+        data.history.push({
+            medId: id, 
+            medName: name, 
+            date: new Date().toDateString(), 
+            timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        }); 
         saveToDisk(); renderToday(); 
     }
-    function undoTake(id) { if(confirm("Undo?")) { const idx = data.history.findLastIndex(h => h.medId === id && h.date === new Date().toDateString()); if(idx>-1) data.history.splice(idx,1); saveToDisk(); renderToday(); } }
-    function deleteMed(id) { if(confirm("Delete?")) { data.meds = data.meds.filter(m => m.id !== id); saveToDisk(); renderStoredMeds(); } }
-    function masterReset() { if (prompt("Type SURE to wipe ALL data:") === "SURE") { localStorage.clear(); location.reload(); } }
+
+    function undoTake(id) { 
+        if(confirm("Undo?")) { 
+            const idx = data.history.findLastIndex(h => h.medId === id && h.date === new Date().toDateString()); 
+            if(idx > -1) data.history.splice(idx,1); 
+            saveToDisk(); renderToday(); 
+        } 
+    }
 
     window.onload = function() {
         loadData();
         document.getElementById('version-display').innerText = "V " + APP_VERSION;
-        if (!data.userName) { data.userName = prompt("Name?") || "User"; saveToDisk(); }
+        if (!data.userName) { data.userName = prompt("Enter Name:") || "User"; saveToDisk(); }
         document.getElementById('greeting').innerText = `Hello, ${data.userName}!`;
-        const container = document.getElementById('taper-selector');
-        container.innerHTML = daysOfWeek.map(day => `<div class="taper-row"><label style="cursor:pointer; font-weight:600;"><input type="checkbox" class="day-check" value="${day}"> ${day.substring(0,3)}</label><input type="date" id="stop-${day}"></div>`).join('');
         renderToday();
     };
 </script>

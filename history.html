@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedMinder - Adherence History</title>
+    <style>
+        :root {
+            --primary: #2ecc71; --secondary: #3498db; --header-blue: #1a252f; 
+            --danger: #e74c3c; --dark-bg: #121212; --card-bg: #1e1e1e; 
+            --text-main: #e0e0e0; --text-dim: #b0b0b0; --shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--dark-bg); margin: 0; padding: 0; color: var(--text-main); }
+        .top-bar { background: var(--header-blue); color: white; padding: 10px 15px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+        .container { max-width: 500px; margin: 0 auto; padding: 10px; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: var(--shadow); border: 1px solid #333; }
+        h2 { margin-top: 0; color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 12px; }
+        .btn { border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 700; width: 100%; margin-bottom: 15px; font-size: 0.95rem; transition: all 0.2s ease; display: block; text-align: center; background: var(--secondary); color: white; }
+        .med-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #2a2a2a; }
+        .med-label-group { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .med-time-label { font-size: 0.9rem; font-weight: 800; color: #fff; }
+        .med-name-label { font-size: 0.95rem; color: var(--text-dim); }
+        .date-header { padding: 8px 0; border-bottom: 1px solid #333; color: var(--secondary); font-size: 0.85rem; font-weight: bold; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <strong>MedMinder History</strong>
+</div>
+
+<div class="container">
+    <button class="btn" onclick="window.history.back()">← Back</button>
+    
+    <div class="card">
+        <h2>Recent Adherence Log (Last 15 Days)</h2>
+        <div id="history-list-content"></div>
+    </div>
+</div>
+
+<script>
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let data = JSON.parse(localStorage.getItem('medPWA_Data')) || { meds: [], history: [], installDate: '' };
+
+    function formatDate(dateObj) {
+        const d = new Date(dateObj);
+        return `${daysOfWeek[d.getDay()].substring(0,3)} ${String(d.getDate()).padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+    }
+
+    function isExpired(med, checkDate) {
+        const dayName = daysOfWeek[checkDate.getDay()];
+        const sched = (med.schedules || []).find(s => s.day === dayName);
+        if (!sched) return true;
+        if (!sched.stopDate) return false;
+        const stop = new Date(sched.stopDate); 
+        stop.setHours(23, 59, 59, 999);
+        return checkDate > stop;
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list-content');
+        list.innerHTML = "";
+        const now = new Date();
+        const install = data.installDate ? new Date(data.installDate) : now;
+        install.setHours(0,0,0,0);
+
+        for (let i = 0; i < 15; i++) {
+            let dayToProcess = new Date();
+            dayToProcess.setDate(now.getDate() - i);
+            dayToProcess.setHours(0,0,0,0);
+            const dateStr = dayToProcess.toDateString();
+            
+            if (dayToProcess < install) break;
+
+            const dayMeds = data.meds.filter(m => !isExpired(m, dayToProcess));
+            if (dayMeds.length > 0) {
+                const dateHeader = document.createElement('div');
+                dateHeader.className = "date-header";
+                dateHeader.innerText = formatDate(dayToProcess);
+                list.appendChild(dateHeader);
+                
+                dayMeds.sort((a,b) => a.time.localeCompare(b.time)).forEach(m => {
+                    const record = data.history.find(h => h.medId === m.id && h.date === dateStr);
+                    const item = document.createElement('div');
+                    item.className = "med-item";
+                    item.innerHTML = `
+                        <div class="med-label-group">
+                            <span class="med-time-label">${m.time}</span>
+                            <span class="med-name-label">${m.name}</span>
+                        </div>
+                        <div style="text-align:right;">
+                            ${record ? 
+                                `<div style="color:var(--primary); font-weight:bold; font-size:0.85rem;">TAKEN</div><small style="font-size:0.7rem;">at ${record.timestamp}</small>` : 
+                                `<div style="color:var(--danger); font-weight:bold; font-size:0.85rem;">NOT TAKEN</div>`
+                            }
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+        }
+        if (list.innerHTML === "") list.innerHTML = "<p style='text-align:center;'>No history to display.</p>";
+    }
+
+    window.onload = renderHistory;
+</script>
+</body>
+</html>
