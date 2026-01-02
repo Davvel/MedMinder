@@ -1,10 +1,11 @@
 {
-  "name": "Medicine Reminder",
+  "name": "MedMinder",
   "short_name": "MedMinder",
-  "start_url": "index.html",
+  "description": "Daily medication schedule and adherence tracker.",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#121212",
-  "theme_color": "#4CAF50",
+  "theme_color": "#1a252f",
   "icons": [
     {
       "src": "meds_icon.png",
