@@ -6,7 +6,8 @@ const ASSETS = [
   './index.html',
   './main.html',
   './manifest.json',
-  './meds_icon.png'
+  './meds_icon.png',
+  './meds_icon_192.png'
 ];
 
 // 1. Install Event: Populate the cache with all assets
