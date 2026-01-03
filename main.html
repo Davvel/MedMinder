@@ -167,12 +167,6 @@
 
     window.onload = function() {
         // PWA Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log("Service Worker Active on Main Page"))
-                .catch(err => console.log("SW Registration Failed", err));
-        }
-
         loadData();
         document.getElementById('version-display').innerText = "V " + APP_VERSION;
         if (!data.userName) { data.userName = prompt("Enter Name:") || "User"; saveToDisk(); }
