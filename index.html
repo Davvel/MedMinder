@@ -81,16 +81,16 @@
 
         // 2. Splash Screen Logic
         window.onload = () => {
-            
-        const appName = "MedMinder";
-        document.getElementById('splash-name').innerText = appName;
+            const splash = document.getElementById('splash');
 
-        // Auto-redirect to the Main Trainer page
-        setTimeout(() => {
-            window.location.href = "main.html";
-        }, 4000);
-    
-
+            setTimeout(() => {
+                splash.classList.add('fade-out');
+                setTimeout(() => {
+                    window.location.href = 'main.html';
+                }, 800); 
+            }, 2000); 
+        };
+        
     </script>
 </body>
 </html>
