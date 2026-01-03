@@ -2,7 +2,7 @@
   "name": "MedMinder",
   "short_name": "MedMinder",
   "description": "Daily medication schedule and adherence tracker.",
-  "start_url": "/MedMinder/index.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#1a252f",
