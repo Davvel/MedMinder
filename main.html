@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a252f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <link rel="icon" type="image/png" sizes="192x192" href="meds_icon_192.png">
+    <link rel="apple-touch-icon" href="meds_icon.png">
 
     <title>MedMinder - Dashboard</title>
     <style>
@@ -95,7 +101,6 @@
                 if (!Array.isArray(data.history)) data.history = [];
             } catch(e) {} 
         }
-        // Save first initialization date if not present
         if (!data.installDate) { 
             const today = new Date(); today.setHours(0,0,0,0);
             data.installDate = today.toDateString();
@@ -161,6 +166,13 @@
     }
 
     window.onload = function() {
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log("Service Worker Active on Main Page"))
+                .catch(err => console.log("SW Registration Failed", err));
+        }
+
         loadData();
         document.getElementById('version-display').innerText = "V " + APP_VERSION;
         if (!data.userName) { data.userName = prompt("Enter Name:") || "User"; saveToDisk(); }
