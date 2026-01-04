@@ -1,23 +1,22 @@
-const CACHE_NAME = 'medminder-v1.8.2';
-
-// The list of all files that must be cached for the app to work offline
-const ASSETS = [
-  './',
-  './index.html',
-  './main.html',
-  './manifest.json',
-  './meds_icon.png',
-  './meds_icon_192.png'
+const CACHE_NAME = 'version-1.0.1'; // Increment this when you deploy changes
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/script.js',
+  '/icon.png'
 ];
 
-// 1. Install Event: Populate the cache with all assets
+// 1. Install Event: Cache assets and force activation
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Service Worker: Caching Assets');
-      return cache.addAll(ASSETS);
+      console.log('Opened cache');
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  // Force the waiting service worker to become active immediately
+  self.skipWaiting();
 });
 
 // 2. Activate Event: Clean up old versions of the cache
@@ -27,20 +26,22 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('Service Worker: Clearing Old Cache');
+            console.log('Deleting old cache:', cache);
             return caches.delete(cache);
           }
         })
       );
     })
   );
+  // Take control of all open tabs/clients immediately
+  return self.clients.claim();
 });
 
-// 3. Fetch Event: Serve assets from cache, falling back to network
+// 3. Fetch Event: Network-first or Cache-first strategy
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // Return the cached file if found, otherwise fetch from network
+      // Return cached asset if found, otherwise fetch from network
       return response || fetch(event.request);
     })
   );
