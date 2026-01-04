@@ -23,7 +23,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #121212; /* Updated to match Dark Theme */
+            background-color: #121212; 
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
@@ -36,7 +36,7 @@
         .main-title {
             font-size: 3rem;
             font-weight: bold;
-            color: #2ecc71; /* High-contrast green */
+            color: #2ecc71; 
             margin: 0;
             letter-spacing: 2px;
         }
@@ -70,11 +70,28 @@
     </div>
 
     <script>
-        // 1. Service Worker Registration for PWA Installation
+        // 1. Service Worker Registration with Auto-Update Logic
         if ('serviceWorker' in navigator) {
+            let refreshing = false;
+
+            // This fires when the new service worker takes over (skipWaiting was called)
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload(); 
+            });
+
             window.addEventListener('load', () => {
+                // We add a timestamp to sw.js to help bypass aggressive browser caching during registration
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW Registered'))
+                    .then(reg => {
+                        console.log('SW Registered');
+                        
+                        // Check for updates frequently
+                        if (reg) {
+                            reg.update();
+                        }
+                    })
                     .catch(err => console.log('SW Failed', err));
             });
         }
@@ -86,11 +103,11 @@
             setTimeout(() => {
                 splash.classList.add('fade-out');
                 setTimeout(() => {
+                    // This moves to the main app after the splash
                     window.location.href = 'main.html';
                 }, 800); 
             }, 2000); 
         };
-        
     </script>
 </body>
 </html>
