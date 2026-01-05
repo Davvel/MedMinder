@@ -1,9 +1,13 @@
-const CACHE_NAME = 'version-1.0.2'; // Updated version
+const CACHE_NAME = 'version-1.0.3'; // Updated version
 const ASSETS_TO_CACHE = [
   '/',
-  '/styles.css',
-  '/script.js',
-  '/icon.png'
+  '/meds_icon_192.png',
+  '/meds_icon.png',
+  '/index.html',
+  '/main.html',
+  '/history.html',
+  '/futuremeds.html',
+  '/configuremeds.html'
 ];
 
 self.addEventListener('install', (event) => {
