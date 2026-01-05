@@ -70,7 +70,7 @@
 
     <div class="splash-container fade-in" id="splash">
         <h1 class="main-title">MedMinder</h1>
-        <p class="sub-title">The Medicine Tracker / Reminder</p>
+        <p class="sub-title">The Medicine Tracker and Reminder</p>
     </div>
 
     <script>
@@ -87,7 +87,7 @@
 
             window.addEventListener('load', () => {
                 // We add a timestamp to sw.js to help bypass aggressive browser caching during registration
-                navigator.serviceWorker.register('./sw.js?v=2')
+                navigator.serviceWorker.register('./sw.js?v=3')
                     .then(reg => {
                         console.log('SW Registered');
                         
