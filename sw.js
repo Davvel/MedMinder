@@ -1,48 +1,47 @@
-const CACHE_NAME = 'version-1.0.1'; // Increment this when you deploy changes
+const CACHE_NAME = 'version-1.0.2'; // Updated version
 const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
   '/styles.css',
   '/script.js',
   '/icon.png'
 ];
 
-// 1. Install Event: Cache assets and force activation
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Opened cache');
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
-  // Force the waiting service worker to become active immediately
   self.skipWaiting();
 });
 
-// 2. Activate Event: Clean up old versions of the cache
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then((keys) => {
       return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('Deleting old cache:', cache);
-            return caches.delete(cache);
-          }
-        })
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       );
     })
   );
-  // Take control of all open tabs/clients immediately
   return self.clients.claim();
 });
 
-// 3. Fetch Event: Network-first or Cache-first strategy
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Return cached asset if found, otherwise fetch from network
-      return response || fetch(event.request);
-    })
-  );
+  // Strategy: Network-First for HTML, Stale-While-Revalidate for Assets
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/index.html'))
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          // Serve from cache, but update cache in background
+          fetch(event.request).then((networkResponse) => {
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+          });
+          return cachedResponse;
+        }
+        return fetch(event.request);
+      })
+    );
+  }
 });
